@@ -1,5 +1,8 @@
+#!/usr/bin/env node
+
 var fs = require('fs')
 var url = require('url')
+var os = require('os')
 
 function consumeAll (filelike, done) {
   var data = ''
@@ -30,6 +33,14 @@ function makeRequest (target, callback) {
   return http.request(params, callback)
 }
 
+function generateData (tests) {
+  if (process.env.TRAVIS === 'true') {
+    return generateTravisData(tests)
+  }
+
+  throw new Error('Build environment not supported')
+}
+
 function generateTravisData (tests) {
   return {
     authorization: process.env.SHELFGAUGE_AUTH,
@@ -40,10 +51,12 @@ function generateTravisData (tests) {
       tests: tests,
       env: {
         source: 'travis',
-        info: (
-          'Build id: ' + process.env.TRAVIS_BUILD_ID + '\n' +
+        info: [
+          'CPU: ' + os.cpus()[0].model,
+          'Platform: ' + os.platform,
+          'Build id: ' + process.env.TRAVIS_BUILD_ID,
           'Job id: ' + process.env.TRAVIS_JOB_ID
-        ),
+        ].join('\n')
       },
     },
   }
@@ -64,17 +77,21 @@ function once (callback) {
 function postData (url, tests, done) {
   var doneOnce = once(done)
 
-  var data = generateTravisData(tests)
-  var req = makeRequest(url, function (res) {
-    consumeAll(res, doneOnce)
-  })
+  try {
+    var data = generateData(tests)
+    var req = makeRequest(url, function (res) {
+      consumeAll(res, doneOnce)
+    })
 
-  req.on('error', function (err) {
+    req.on('error', function (err) {
+      doneOnce(err)
+    })
+
+    req.write(JSON.stringify(data))
+    req.end()
+  } catch (err) {
     doneOnce(err)
-  })
-
-  req.write(JSON.stringify(data))
-  req.end()
+  }
 }
 
 if (require.main === module) {
@@ -88,16 +105,22 @@ if (require.main === module) {
 
   consumeAll(process.stdin, function (err, stdin) {
     if (err) {
-      done(err)
+      return done(err)
     }
 
     try {
       var tests = JSON.parse(stdin)
-      postData(process.argv[2], tests, done)
+      var url = process.argv[2]
+      if (url) {
+        postData(url, tests, done)
+      } else {
+        done(null, generateData(tests))
+      }
     } catch (err) {
       done(err)
     }
   })
 } else {
-  module.exports = post
+  exports.postData = postData
+  exports.generateData = generateData
 }
