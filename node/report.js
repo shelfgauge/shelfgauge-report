@@ -53,7 +53,7 @@ function generateTravisData (tests) {
         source: 'travis',
         info: [
           'CPU: ' + os.cpus()[0].model,
-          'Platform: ' + os.platform,
+          'Platform: ' + os.platform(),
           'Build id: ' + process.env.TRAVIS_BUILD_ID,
           'Job id: ' + process.env.TRAVIS_JOB_ID
         ].join('\n')
