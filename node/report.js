@@ -38,6 +38,10 @@ function generateData (tests) {
     return generateTravisData(tests)
   }
 
+  if (process.env.CIRCLECI === 'true') {
+    return generateCircleData(tests)
+  }
+
   throw new Error('Build environment not supported')
 }
 
@@ -56,6 +60,26 @@ function generateTravisData (tests) {
           'Platform: ' + os.platform(),
           'Build id: ' + process.env.TRAVIS_BUILD_ID,
           'Job id: ' + process.env.TRAVIS_JOB_ID
+        ].join('\n')
+      },
+    },
+  }
+}
+
+function generateCircleData (tests) {
+  return {
+    authorization: process.env.SHELFGAUGE_AUTH,
+    data: {
+      ref: process.env.CIRCLE_SHA1,
+      name: process.env.CIRCLE_BRANCH,
+      ranAt: new Date().toISOString(),
+      tests: tests,
+      env: {
+        source: 'circle',
+        info: [
+          'CPU: ' + os.cpus()[0].model,
+          'Platform: ' + os.platform(),
+          'Build num: ' + process.env.CIRCLE_BUILD_NUM
         ].join('\n')
       },
     },
