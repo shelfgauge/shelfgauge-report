@@ -1,7 +1,7 @@
 {
+  "private": true,
   "name": "shelfgauge-report-test",
   "version": "1.0.0",
-  "main": "index.js",
   "repository": "git@github.com:shelfgauge/shelfgauge-report.git",
   "author": "Benjamin Feng <contact@fengb.me>",
   "license": "MIT",
