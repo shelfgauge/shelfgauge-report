@@ -49,7 +49,8 @@ defineSupportCode(({ Given, When, Then, Before, After }) => {
 
   Then('the server should receive:', (pattern: string) => {
     pattern = pattern.replace(/\$([A-Z_]+)/g, (match, envName) => ENV[envName])
-    const failMessage = matchPattern(server.lastRequest(), pattern)
+    const json = JSON.parse(server.lastRequest())
+    const failMessage = matchPattern(json, pattern)
     if (failMessage) {
       throw new Error(failMessage)
     }
