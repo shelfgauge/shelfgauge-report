@@ -13,7 +13,7 @@ Feature: travis
               { "name": "hello", "value": 1.0}
             ]
             """
-       When I run "node node/report.js $testfile"
+       When I run "node/report.js $testfile $testserver"
        Then output should match pattern:
             """
             {

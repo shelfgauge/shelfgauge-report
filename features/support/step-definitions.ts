@@ -3,17 +3,26 @@ import * as os from 'os'
 import { defineSupportCode } from 'cucumber'
 import { exec } from 'child_process'
 const matchPattern = require('lodash-match-pattern')
+import * as server from './server'
 
-defineSupportCode(({ Given, When, Then, After }) => {
+defineSupportCode(({ Given, When, Then, Before, After }) => {
   const ENV = { ...process.env } as { [key: string]: string }
 
   let testfile: string
-  let capture: { err: Error, stdout: string, stderr: string }
+
+  Before(() => {
+    server.reset()
+  })
+
+  After(() => {
+    if (testfile) {
+      fs.unlinkSync(testfile)
+    }
+  })
 
   Given('the following environment variables:', (str: string) => {
     for (const env of str.split('\n')) {
       const [name, value] = env.split('=')
-      console.log(env)
       ENV[name] = value
     }
   })
@@ -25,8 +34,10 @@ defineSupportCode(({ Given, When, Then, After }) => {
 
   When('I run "{bashCommand}"', (bashCommand: string) => {
     return new Promise((resolve, reject) => {
-      const child = exec(bashCommand.trim().replace('$testfile', testfile), { env: ENV }, (err, stdout, stderr) => {
-        capture = { err, stdout, stderr }
+      const command = bashCommand.replace('$testfile', testfile)
+                                 .replace('$testserver', server.address())
+
+      exec(command, { env: ENV }, (err, stdout, stderr) => {
         if (err) {
           reject(err)
         } else {
@@ -38,16 +49,9 @@ defineSupportCode(({ Given, When, Then, After }) => {
 
   Then('output should match pattern:', (pattern: string) => {
     pattern = pattern.replace(/\$([A-Z_]+)/g, (match, envName) => ENV[envName])
-    const output = JSON.parse(capture.stdout)
-    const failMessage = matchPattern(output, pattern)
+    const failMessage = matchPattern(server.lastRequest(), pattern)
     if (failMessage) {
       throw new Error(failMessage)
-    }
-  })
-
-  After(() => {
-    if (testfile) {
-      fs.unlinkSync(testfile)
     }
   })
 })

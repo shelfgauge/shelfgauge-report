@@ -26,6 +26,10 @@ function consumeAll (file, done) {
 }
 
 function makeRequest (target, callback) {
+  if (!/https?:/.test(target)) {
+    target = 'http://' + target
+  }
+
   var uri = url.parse(target)
   var http = require(uri.protocol === 'https:' ? 'https' : 'http')
   var params = {
@@ -106,7 +110,7 @@ function once (callback) {
   }
 }
 
-function postData (url, tests, done) {
+function postData (tests, url, done) {
   var doneOnce = once(done)
 
   try {
@@ -145,7 +149,7 @@ if (require.main === module) {
       var tests = JSON.parse(testfile)
       var url = process.argv[3]
       if (url) {
-        postData(url, tests, done)
+        postData(tests, url, done)
       } else {
         done(null, JSON.stringify(generateData(tests)))
       }
