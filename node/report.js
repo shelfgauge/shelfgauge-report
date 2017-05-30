@@ -3,6 +3,7 @@
 var fs = require('fs')
 var url = require('url')
 var os = require('os')
+var path = require('path')
 
 function consumeAll (file, done) {
   if (!file.on) {
@@ -140,19 +141,21 @@ if (require.main === module) {
     }
   })
 
-  consumeAll(process.argv[2] || process.stdin, function (err, testfile) {
+  var file = process.argv[2]
+  var addr = process.argv[3]
+
+  if (!file || !addr) {
+    return done("usage: node " + path.basename(__filename) + " testsfile http://shelfgauge.url")
+  }
+
+  consumeAll(file, function (err, testsString) {
     if (err) {
       return done(err)
     }
 
     try {
-      var tests = JSON.parse(testfile)
-      var url = process.argv[3]
-      if (url) {
-        postData(tests, url, done)
-      } else {
-        done(null, JSON.stringify(generateData(tests)))
-      }
+      var tests = JSON.parse(testsString)
+      postData(tests, addr, done)
     } catch (err) {
       done(err)
     }
