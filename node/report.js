@@ -5,27 +5,6 @@ var url = require('url')
 var os = require('os')
 var path = require('path')
 
-function consumeAll (file, done) {
-  if (!file.on) {
-    return fs.readFile(file, done)
-  }
-
-  try {
-    var data = ''
-    file.on('data', function (chunk) {
-      data += chunk
-    })
-    file.on('error', function (err) {
-      done(err)
-    })
-    file.on('end', function () {
-      done(null, data)
-    })
-  } catch (err) {
-    done(err)
-  }
-}
-
 function makeRequest (target, callback) {
   if (!/https?:/.test(target)) {
     target = 'http://' + target
@@ -117,7 +96,16 @@ function post (tests, url, done) {
   try {
     var data = JSON.stringify(body(tests))
     var req = makeRequest(url, function (res) {
-      consumeAll(res, doneOnce)
+      var data = ''
+      res.on('data', function (chunk) {
+        data += chunk
+      })
+      res.on('error', function (err) {
+        doneOnce(err)
+      })
+      res.on('end', function () {
+        doneOnce(null, data)
+      })
     })
 
     req.on('error', function (err) {
@@ -148,18 +136,12 @@ if (require.main === module) {
     return done("usage: node " + path.basename(__filename) + " testsfile http://shelfgauge.url")
   }
 
-  consumeAll(file, function (err, testsString) {
-    if (err) {
-      return done(err)
-    }
-
-    try {
-      var tests = JSON.parse(testsString)
-      post(tests, addr, done)
-    } catch (err) {
-      done(err)
-    }
-  })
+  try {
+    var tests = JSON.parse(fs.readFileSync(file))
+    post(tests, addr, done)
+  } catch (err) {
+    done(err)
+  }
 } else {
   exports.post = post
   exports.body = body
