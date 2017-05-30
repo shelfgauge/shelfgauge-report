@@ -46,19 +46,19 @@ function makeRequest (target, callback) {
   return http.request(params, callback)
 }
 
-function generateData (tests) {
+function body (tests) {
   if (process.env.TRAVIS === 'true') {
-    return generateTravisData(tests)
+    return travisBody(tests)
   }
 
   if (process.env.CIRCLECI === 'true') {
-    return generateCircleData(tests)
+    return circleBody(tests)
   }
 
   throw new Error('Build environment not supported')
 }
 
-function generateTravisData (tests) {
+function travisBody (tests) {
   return {
     authorization: process.env.SHELFGAUGE_AUTH,
     data: {
@@ -79,7 +79,7 @@ function generateTravisData (tests) {
   }
 }
 
-function generateCircleData (tests) {
+function circleBody (tests) {
   return {
     authorization: process.env.SHELFGAUGE_AUTH,
     data: {
@@ -111,11 +111,11 @@ function once (callback) {
   }
 }
 
-function postData (tests, url, done) {
+function post (tests, url, done) {
   var doneOnce = once(done)
 
   try {
-    var data = generateData(tests)
+    var data = JSON.stringify(body(tests))
     var req = makeRequest(url, function (res) {
       consumeAll(res, doneOnce)
     })
@@ -124,7 +124,7 @@ function postData (tests, url, done) {
       doneOnce(err)
     })
 
-    req.write(JSON.stringify(data))
+    req.write(data)
     req.end()
   } catch (err) {
     doneOnce(err)
@@ -155,12 +155,12 @@ if (require.main === module) {
 
     try {
       var tests = JSON.parse(testsString)
-      postData(tests, addr, done)
+      post(tests, addr, done)
     } catch (err) {
       done(err)
     }
   })
 } else {
-  exports.postData = postData
-  exports.generateData = generateData
+  exports.post = post
+  exports.body = body
 }

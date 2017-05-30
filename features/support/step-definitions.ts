@@ -47,7 +47,7 @@ defineSupportCode(({ Given, When, Then, Before, After }) => {
     })
   })
 
-  Then('output should match pattern:', (pattern: string) => {
+  Then('the server should receive:', (pattern: string) => {
     pattern = pattern.replace(/\$([A-Z_]+)/g, (match, envName) => ENV[envName])
     const failMessage = matchPattern(server.lastRequest(), pattern)
     if (failMessage) {

@@ -1,11 +1,13 @@
 Feature: travis
-  Scenario: node
+  Scenario Outline: travis
       Given the following environment variables:
             """
             SHELFGAUGE_AUTH=abcde
             TRAVIS=true
             TRAVIS_COMMIT=12345
             TRAVIS_BRANCH=master
+            TRAVIS_BUILD_ID=1
+            TRAVIS_JOB_ID=11
             """
         And the following test file:
             """
@@ -13,8 +15,8 @@ Feature: travis
               { "name": "hello", "value": 1.0}
             ]
             """
-       When I run "node/report.js $testfile $testserver"
-       Then output should match pattern:
+       When I run "<program> $testfile $testserver"
+       Then the server should receive:
             """
             {
               "authorization": "$SHELFGAUGE_AUTH",
@@ -32,3 +34,7 @@ Feature: travis
               }
             }
             """
+  Examples:
+      | program        |
+      | node/report.js |
+      | ruby/report.rb |
