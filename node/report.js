@@ -4,17 +4,25 @@ var fs = require('fs')
 var url = require('url')
 var os = require('os')
 
-function consumeAll (filelike, done) {
-  var data = ''
-  filelike.on('data', function (chunk) {
-    data += chunk
-  })
-  filelike.on('error', function (err) {
+function consumeAll (file, done) {
+  if (!file.on) {
+    return fs.readFile(file, done)
+  }
+
+  try {
+    var data = ''
+    file.on('data', function (chunk) {
+      data += chunk
+    })
+    file.on('error', function (err) {
+      done(err)
+    })
+    file.on('end', function () {
+      done(null, data)
+    })
+  } catch (err) {
     done(err)
-  })
-  filelike.on('end', function () {
-    done(null, data)
-  })
+  }
 }
 
 function makeRequest (target, callback) {
@@ -122,23 +130,24 @@ if (require.main === module) {
   var done = once(function (err, data) {
     if (err) {
       console.error(err)
+      process.exit(1)
     } else {
       console.log(data)
     }
   })
 
-  consumeAll(process.stdin, function (err, stdin) {
+  consumeAll(process.argv[2] || process.stdin, function (err, testfile) {
     if (err) {
       return done(err)
     }
 
     try {
-      var tests = JSON.parse(stdin)
-      var url = process.argv[2]
+      var tests = JSON.parse(testfile)
+      var url = process.argv[3]
       if (url) {
         postData(url, tests, done)
       } else {
-        done(null, generateData(tests))
+        done(null, JSON.stringify(generateData(tests)))
       }
     } catch (err) {
       done(err)

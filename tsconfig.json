@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "lib": ["es2015", "es2016", "es2017"],
+    "module": "commonjs",
+    "target": "es2016",
+
+    "noEmitOnError": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true
+  }
+}

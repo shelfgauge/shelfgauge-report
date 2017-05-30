@@ -6,11 +6,13 @@
   "author": "Benjamin Feng <contact@fengb.me>",
   "license": "MIT",
   "scripts": {
-    "test": "cucumber-js"
+    "test": "cucumber-js --compiler ts:ts-node/register"
   },
   "devDependencies": {
     "@types/cucumber": "^2.0.1",
+    "@types/node": "^7.0.22",
     "cucumber": "^2.2.0",
+    "lodash-match-pattern": "^1.3.1",
     "ts-node": "^3.0.4",
     "typescript": "^2.3.3"
   }
