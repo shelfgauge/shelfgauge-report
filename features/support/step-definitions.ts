@@ -5,6 +5,10 @@ import { exec } from 'child_process'
 const matchPattern = require('lodash-match-pattern')
 import * as server from './server'
 
+function replaceVars (string: string, vars: { [key: string]: string }): string {
+  return string.replace(/\$([A-Za-z0-9_]+)/g, (_, capture) => vars[capture] || capture)
+}
+
 defineSupportCode(({ Given, When, Then, Before, After }) => {
   const ENV = { ...process.env } as { [key: string]: string }
 
@@ -34,8 +38,10 @@ defineSupportCode(({ Given, When, Then, Before, After }) => {
 
   When('I run "{bashCommand}"', (bashCommand: string) => {
     return new Promise((resolve, reject) => {
-      const command = bashCommand.replace('$testfile', testfile)
-                                 .replace('$testserver', server.address())
+      const command = replaceVars(bashCommand, {
+        testfile: testfile,
+        testserver: server.address(),
+      })
 
       exec(command, { env: ENV }, (err, stdout, stderr) => {
         if (err) {
@@ -48,7 +54,7 @@ defineSupportCode(({ Given, When, Then, Before, After }) => {
   })
 
   Then('the server should receive:', (pattern: string) => {
-    pattern = pattern.replace(/\$([A-Z_]+)/g, (match, envName) => ENV[envName])
+    pattern = replaceVars(pattern, ENV)
     const json = JSON.parse(server.lastRequest())
     const failMessage = matchPattern(json, pattern)
     if (failMessage) {
