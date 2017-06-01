@@ -13,6 +13,7 @@ defineSupportCode(({ Given, When, Then, Before, After }) => {
   const ENV = { ...process.env } as { [key: string]: string }
 
   let testfile: string
+  let lastCommand: { stdout: string, stderr: string }
 
   Before(() => {
     server.reset()
@@ -47,10 +48,17 @@ defineSupportCode(({ Given, When, Then, Before, After }) => {
         if (err) {
           reject(err)
         } else {
+          lastCommand = { stdout, stderr }
           resolve(process)
         }
       })
     })
+  })
+
+  Then('the output should match server response', () => {
+    if (lastCommand.stdout.trim() !== server.lastResponse().trim()) {
+      throw new Error(`Output did not match server response: ${lastCommand.stdout}`)
+    }
   })
 
   Then('the server should receive:', (pattern: string) => {

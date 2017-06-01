@@ -16,7 +16,8 @@ Feature: travis
             ]
             """
        When I run "<program> $testfile $testserver"
-       Then the server should receive:
+       Then the output should match server response
+        And the server should receive:
             """
             {
               "authorization": "$SHELFGAUGE_AUTH",

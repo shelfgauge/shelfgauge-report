@@ -15,13 +15,17 @@ export function lastRequest () {
   return REQUESTS[0]
 }
 
+export function lastResponse () {
+  return 'I am the walrus'
+}
+
 export const app = http.createServer((req, res) => {
   let data = ''
   req
     .on('data', (chunk) => data += chunk)
     .on('end', () => {
       REQUESTS.push(data)
-      res.end()
+      res.end(lastResponse())
     })
 })
 

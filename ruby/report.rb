@@ -15,7 +15,9 @@ module ShelfgaugeReport
 
     Net::HTTP.start(uri.host.gsub(/^\[(.*)\]$/, '\1'), uri.port) do |http|
       path = uri.path.empty? ? '/' : uri.path
-      http.request_post(path, data, "Content-Type" => "application/json", &block)
+      http.request_post(path, data, "Content-Type" => "application/json") do |res|
+        res.read_body(&block)
+      end
     end
   end
 
@@ -61,5 +63,7 @@ if __FILE__ == $0
 
   tests = JSON.parse(IO.read(file))
 
-  ShelfgaugeReport.post(tests, addr)
+  ShelfgaugeReport.post(tests, addr) do |body|
+    puts body
+  end
 end
