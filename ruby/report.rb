@@ -56,8 +56,7 @@ if __FILE__ == $0
   addr = ARGV[1]
 
   if !file || !addr
-    $stderr.puts ARGV
-    $stderr.puts "usage: ruby #{__FILE__} testsfile http://shelfgauge.url"
+    $stderr.puts "usage: ruby #{__FILE__} tests.json http://shelfgauge.url"
     exit 1
   end
 

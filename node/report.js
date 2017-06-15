@@ -133,7 +133,7 @@ if (require.main === module) {
   var addr = process.argv[3]
 
   if (!file || !addr) {
-    return done("usage: node " + path.basename(__filename) + " testsfile http://shelfgauge.url")
+    return done("usage: node " + path.basename(__filename) + " tests.json http://shelfgauge.url")
   }
 
   try {
