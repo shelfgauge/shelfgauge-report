@@ -1,43 +1,43 @@
 #!/usr/bin/env node
 
-var fs = require('fs')
-var url = require('url')
-var os = require('os')
-var path = require('path')
+var fs = require("fs");
+var url = require("url");
+var os = require("os");
+var util = require("util");
 
-function makeRequest (target, callback) {
+function makeRequest(target, callback) {
   if (!/https?:/.test(target)) {
-    target = 'http://' + target
+    target = "http://" + target;
   }
 
-  var uri = url.parse(target)
-  var http = require(uri.protocol === 'https:' ? 'https' : 'http')
+  var uri = url.parse(target);
+  var http = require(uri.protocol === "https:" ? "https" : "http");
   var params = {
-    method: 'POST',
+    method: "POST",
     hostname: uri.hostname,
     port: uri.port,
     path: uri.path,
     headers: {
-      'Content-Type': 'application/json',
-    },
-  }
+      "Content-Type": "application/json"
+    }
+  };
 
-  return http.request(params, callback)
+  return http.request(params, callback);
 }
 
-function body (tests) {
-  if (process.env.TRAVIS === 'true') {
-    return travisBody(tests)
+function body(tests) {
+  if (process.env.TRAVIS === "true") {
+    return travisBody(tests);
   }
 
-  if (process.env.CIRCLECI === 'true') {
-    return circleBody(tests)
+  if (process.env.CIRCLECI === "true") {
+    return circleBody(tests);
   }
 
-  throw new Error('Build environment not supported')
+  throw new Error("Build environment not supported");
 }
 
-function travisBody (tests) {
+function travisBody(tests) {
   return {
     authorization: process.env.SHELFGAUGE_AUTH,
     data: {
@@ -46,19 +46,19 @@ function travisBody (tests) {
       ranAt: new Date().toISOString(),
       tests: tests,
       env: {
-        source: 'travis',
+        source: "travis",
         info: [
-          'CPU: ' + os.cpus()[0].model,
-          'Platform: ' + os.platform(),
-          'Build id: ' + process.env.TRAVIS_BUILD_ID,
-          'Job id: ' + process.env.TRAVIS_JOB_ID
-        ].join('\n')
-      },
-    },
-  }
+          "CPU: " + os.cpus()[0].model,
+          "Platform: " + os.platform(),
+          "Build id: " + process.env.TRAVIS_BUILD_ID,
+          "Job id: " + process.env.TRAVIS_JOB_ID
+        ].join("\n")
+      }
+    }
+  };
 }
 
-function circleBody (tests) {
+function circleBody(tests) {
   return {
     authorization: process.env.SHELFGAUGE_AUTH,
     data: {
@@ -67,82 +67,85 @@ function circleBody (tests) {
       ranAt: new Date().toISOString(),
       tests: tests,
       env: {
-        source: 'circle',
+        source: "circle",
         info: [
-          'CPU: ' + os.cpus()[0].model,
-          'Platform: ' + os.platform(),
-          'Build num: ' + process.env.CIRCLE_BUILD_NUM
-        ].join('\n')
-      },
-    },
-  }
+          "CPU: " + os.cpus()[0].model,
+          "Platform: " + os.platform(),
+          "Build num: " + process.env.CIRCLE_BUILD_NUM
+        ].join("\n")
+      }
+    }
+  };
 }
 
-function once (callback) {
-  var wasCalled = false
-  return function () {
+function once(callback) {
+  var wasCalled = false;
+  return function() {
     if (wasCalled) {
-      return
+      return;
     }
 
-    callback.apply(this, arguments)
-    wasCalled = true
-  }
+    callback.apply(this, arguments);
+    wasCalled = true;
+  };
 }
 
-function post (tests, url, done) {
-  var doneOnce = once(done)
+function post(tests, url, done) {
+  var doneOnce = once(done);
 
   try {
-    var data = JSON.stringify(body(tests))
-    var req = makeRequest(url, function (res) {
-      var data = ''
-      res.on('data', function (chunk) {
-        data += chunk
-      })
-      res.on('error', function (err) {
-        doneOnce(err)
-      })
-      res.on('end', function () {
-        doneOnce(null, data)
-      })
-    })
+    var data = JSON.stringify(body(tests));
+    var req = makeRequest(url, function(res) {
+      var data = "";
+      res.on("data", function(chunk) {
+        data += chunk;
+      });
+      res.on("error", function(err) {
+        doneOnce(err);
+      });
+      res.on("end", function() {
+        doneOnce(null, data);
+      });
+    });
 
-    req.on('error', function (err) {
-      doneOnce(err)
-    })
+    req.on("error", function(err) {
+      doneOnce(err);
+    });
 
-    req.write(data)
-    req.end()
+    req.write(data);
+    req.end();
   } catch (err) {
-    doneOnce(err)
+    doneOnce(err);
   }
 }
 
 if (require.main === module) {
-  var done = once(function (err, data) {
+  var done = once(function(err, data) {
     if (err) {
-      console.error(err)
-      process.exit(1)
+      console.error(err);
+      process.exit(1);
     } else {
-      console.log(data)
+      console.log(data);
     }
-  })
+  });
 
-  var file = process.argv[2]
-  var addr = process.argv[3]
+  var file = process.argv[2];
+  var addr = process.argv[3];
 
   if (!file || !addr) {
-    return done("usage: node " + path.basename(__filename) + " tests.json http://shelfgauge.url")
+    var script = path.basename(__filename);
+    return done(
+      util.format("usage: node %s tests.json http://shelfgauge.url", script)
+    );
   }
 
   try {
-    var tests = JSON.parse(fs.readFileSync(file))
-    post(tests, addr, done)
+    var tests = JSON.parse(fs.readFileSync(file));
+    post(tests, addr, done);
   } catch (err) {
-    done(err)
+    done(err);
   }
 } else {
-  exports.post = post
-  exports.body = body
+  exports.post = post;
+  exports.body = body;
 }
