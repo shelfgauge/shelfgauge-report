@@ -37,12 +37,22 @@ function body(tests) {
   throw new Error("Build environment not supported");
 }
 
+function env(varName, options = {}) {
+  var env = process.env[varName];
+  if (env === undefined || env === options.ignore) {
+    return undefined;
+  } else {
+    return env;
+  }
+}
+
 function travisBody(tests) {
   return {
     authorization: process.env.SHELFGAUGE_AUTH,
     data: {
       ref: process.env.TRAVIS_COMMIT,
       name: process.env.TRAVIS_BRANCH,
+      pullRequest: env("TRAVIS_PULL_REQUEST", { ignore: "false" }),
       ranAt: new Date().toISOString(),
       tests: tests,
       env: {

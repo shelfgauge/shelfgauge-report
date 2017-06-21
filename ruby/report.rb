@@ -30,11 +30,12 @@ module ShelfgaugeReport
   end
 
   def self.travis_body(tests)
-    {
+    compacterize({
       authorization: ENV['SHELFGAUGE_AUTH'],
       data: {
-        ref: ENV.fetch('TRAVIS_COMMIT', 'undefined'),
-        name: ENV.fetch('TRAVIS_BRANCH', 'undefined'),
+        ref: ENV['TRAVIS_COMMIT'],
+        name: ENV['TRAVIS_BRANCH'],
+        pullRequest: env('TRAVIS_PULL_REQUEST', ignore: 'false'),
         ranAt: DateTime.now.iso8601,
         tests: tests,
         env: {
@@ -42,12 +43,28 @@ module ShelfgaugeReport
           info: [
             'CPU: ' + 'TODO',
             'Platform: ' + RUBY_PLATFORM,
-            'Build id: ' + ENV.fetch('TRAVIS_BUILD_ID', 'undefined'),
-            'Job id: ' + ENV.fetch('TRAVIS_JOB_ID', 'undefined')
+            'Build id: ' + env('TRAVIS_BUILD_ID', default: 'undefined'),
+            'Job id: ' + env('TRAVIS_JOB_ID', default: 'undefined')
           ].join('\n')
         },
       },
-    }
+    })
+  end
+
+  def self.compacterize(obj)
+    case obj
+      when Array then obj.compact.map { |item| compacterize(item) }
+      when Hash then obj.each_with_object({}) { |(key, item), hash| !item.nil? && hash[key] = compacterize(item) }
+      else obj
+    end
+  end
+
+  def self.env(name, options)
+    if ENV[name] && ENV[name] != options[:ignore]
+      ENV[name]
+    else
+      options[:default]
+    end
   end
 end
 

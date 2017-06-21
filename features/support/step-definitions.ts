@@ -13,12 +13,13 @@ function replaceVars(string: string, vars: { [key: string]: string }): string {
 }
 
 defineSupportCode(({ Given, When, Then, Before, After }) => {
-  const ENV = { ...process.env } as { [key: string]: string };
+  let ENV: { [key: string]: string };
 
   let testfile: string;
   let lastCommand: { stdout: string; stderr: string };
 
   Before(() => {
+    ENV = { ...process.env };
     server.reset();
   });
 

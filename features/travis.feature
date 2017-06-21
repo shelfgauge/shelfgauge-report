@@ -12,7 +12,7 @@ Feature: travis
         And the following test file:
             """
             [
-              { "name": "hello", "value": 1.0}
+              { "name": "hello", "value": 1.0 }
             ]
             """
        When I run "<program> $testfile $testserver"
@@ -32,6 +32,36 @@ Feature: travis
                 "tests": [
                   { "name": "hello", "value": 1.0 }
                 ]
+              }
+            }
+            """
+      Given the following environment variables:
+            """
+            TRAVIS_PULL_REQUEST=false
+            """
+       When I run "<program> $testfile $testserver"
+       Then the server should receive:
+            """
+            {
+              "authorization": "$SHELFGAUGE_AUTH",
+              "data": {
+                "pullRequest": _.isUndefined
+                ...
+              }
+            }
+            """
+      Given the following environment variables:
+            """
+            TRAVIS_PULL_REQUEST=1
+            """
+       When I run "<program> $testfile $testserver"
+       Then the server should receive:
+            """
+            {
+              "authorization": "$SHELFGAUGE_AUTH",
+              "data": {
+                "pullRequest": "$TRAVIS_PULL_REQUEST"
+                ...
               }
             }
             """
